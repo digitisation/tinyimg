@@ -32,13 +32,13 @@
                 margin: 0.25rem 0;
             }
             .images {
-                display: flex;
-                flex-wrap: wrap;
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
                 gap: 0.5rem;
                 margin: 2rem 0;
+                grid-auto-flow: dense;
             }
             .image-container {
-                width: calc(33.333% - 0.35rem);
                 box-sizing: border-box;
             }
             .image-container img {
