@@ -46,7 +46,12 @@
                 height: auto;
                 display: block;
                 image-rendering: pixelated;
-                object-fit: contain;
+            }
+            .to-dither {
+                visibility: hidden;
+            }
+            .dithered {
+                visibility: visible;
             }
             .back {
                 margin-bottom: 2rem;
@@ -221,13 +226,16 @@
 
                     // Apply dithering to images
                     document.querySelectorAll(".to-dither").forEach((img) => {
-                        img.onload = function () {
+                        const originalImg = new Image();
+                        originalImg.crossOrigin = "anonymous";
+                        originalImg.onload = function () {
                             ditherImage(this, (ditheredSrc) => {
-                                this.src = ditheredSrc;
+                                img.src = ditheredSrc;
+                                img.classList.remove("to-dither");
+                                img.classList.add("dithered");
                             });
                         };
-                        // Trigger load if cached
-                        if (img.complete) img.onload();
+                        originalImg.src = img.dataset.original;
                     });
                 } catch (e) {
                     app.innerHTML =
