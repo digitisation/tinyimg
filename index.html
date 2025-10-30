@@ -1,235 +1,248 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Site</title>
-    <style>
-        body {
-            font-family: monospace;
-            max-width: 60ch;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            line-height: 1.6;
-        }
-        a {
-            color: blue;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        .index-item {
-            display: inline;
-        }
-        .index-item::after {
-            content: " ";
-        }
-        .frontmatter {
-            margin-bottom: 2rem;
-        }
-        .frontmatter div {
-            margin: 0.25rem 0;
-        }
-        .images {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin: 2rem 0;
-        }
-        .image-container {
-            width: calc(33.333% - 0.35rem);
-            box-sizing: border-box;
-        }
-        .image-container img {
-            width: 100%;
-            height: auto;
-            display: block;
-            image-rendering: pixelated;
-        }
-        .back {
-            margin-bottom: 2rem;
-        }
-        .content {
-            margin-top: 2rem;
-        }
-    </style>
-</head>
-<body>
-    <div id="app"></div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
-    <script>
-        const app = document.getElementById('app');
-        const PAGES_FOLDER = 'pages';
-
-        // Parse frontmatter from markdown
-        function parseFrontmatter(content) {
-            const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/;
-            const match = content.match(frontmatterRegex);
-            
-            if (!match) return { frontmatter: {}, content: content };
-            
-            const frontmatterText = match[1];
-            const markdown = match[2];
-            const frontmatter = {};
-            
-            frontmatterText.split('\n').forEach(line => {
-                const colonIndex = line.indexOf(':');
-                if (colonIndex > -1) {
-                    const key = line.substring(0, colonIndex).trim();
-                    const value = line.substring(colonIndex + 1).trim();
-                    frontmatter[key] = value;
-                }
-            });
-            
-            return { frontmatter, content: markdown };
-        }
-
-        // Floyd-Steinberg dithering
-        function ditherImage(img, callback) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            
-            ctx.drawImage(img, 0, 0);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            
-            for (let y = 0; y < canvas.height; y++) {
-                for (let x = 0; x < canvas.width; x++) {
-                    const i = (y * canvas.width + x) * 4;
-                    const oldR = data[i];
-                    const oldG = data[i + 1];
-                    const oldB = data[i + 2];
-                    
-                    const newR = oldR < 128 ? 0 : 255;
-                    const newG = oldG < 128 ? 0 : 255;
-                    const newB = oldB < 128 ? 0 : 255;
-                    
-                    data[i] = newR;
-                    data[i + 1] = newG;
-                    data[i + 2] = newB;
-                    
-                    const errR = oldR - newR;
-                    const errG = oldG - newG;
-                    const errB = oldB - newB;
-                    
-                    if (x + 1 < canvas.width) {
-                        data[((y * canvas.width + x + 1) * 4)] += errR * 7 / 16;
-                        data[((y * canvas.width + x + 1) * 4) + 1] += errG * 7 / 16;
-                        data[((y * canvas.width + x + 1) * 4) + 2] += errB * 7 / 16;
-                    }
-                    if (x - 1 >= 0 && y + 1 < canvas.height) {
-                        data[(((y + 1) * canvas.width + x - 1) * 4)] += errR * 3 / 16;
-                        data[(((y + 1) * canvas.width + x - 1) * 4) + 1] += errG * 3 / 16;
-                        data[(((y + 1) * canvas.width + x - 1) * 4) + 2] += errB * 3 / 16;
-                    }
-                    if (y + 1 < canvas.height) {
-                        data[(((y + 1) * canvas.width + x) * 4)] += errR * 5 / 16;
-                        data[(((y + 1) * canvas.width + x) * 4) + 1] += errG * 5 / 16;
-                        data[(((y + 1) * canvas.width + x) * 4) + 2] += errB * 5 / 16;
-                    }
-                    if (x + 1 < canvas.width && y + 1 < canvas.height) {
-                        data[(((y + 1) * canvas.width + x + 1) * 4)] += errR * 1 / 16;
-                        data[(((y + 1) * canvas.width + x + 1) * 4) + 1] += errG * 1 / 16;
-                        data[(((y + 1) * canvas.width + x + 1) * 4) + 2] += errB * 1 / 16;
-                    }
-                }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Site</title>
+        <style>
+            body {
+                font-family: monospace;
+                max-width: 60ch;
+                margin: 2rem auto;
+                padding: 0 1rem;
+                line-height: 1.6;
             }
-            
-            ctx.putImageData(imageData, 0, 0);
-            callback(canvas.toDataURL());
-        }
-
-        // Show index page
-        async function showIndex() {
-            try {
-                const response = await fetch(`${PAGES_FOLDER}/`);
-                const text = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(text, 'text/html');
-                const links = Array.from(doc.querySelectorAll('a'))
-                    .map(a => a.getAttribute('href'))
-                    .filter(href => href && href.endsWith('.md'));
-                
-                app.innerHTML = links.map(file => 
-                    `<span class="index-item"><a href="#${file}">${file.replace('.md', '')}</a></span>`
-                ).join(' ');
-            } catch (e) {
-                app.innerHTML = '<p>Error loading pages. Make sure you have a pages/ folder with .md files.</p>';
+            a {
+                color: blue;
+                text-decoration: none;
             }
-        }
+            a:hover {
+                text-decoration: underline;
+            }
+            .index-item {
+                display: inline;
+            }
+            .index-item::after {
+                content: " ";
+            }
+            .frontmatter {
+                margin-bottom: 2rem;
+            }
+            .frontmatter div {
+                margin: 0.25rem 0;
+            }
+            .images {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                margin: 2rem 0;
+            }
+            .image-container {
+                width: calc(33.333% - 0.35rem);
+                box-sizing: border-box;
+            }
+            .image-container img {
+                width: 100%;
+                height: auto;
+                display: block;
+                image-rendering: pixelated;
+            }
+            .back {
+                margin-bottom: 2rem;
+            }
+            .content {
+                margin-top: 2rem;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app"></div>
 
-        // Show individual page
-        async function showPage(filename) {
-            try {
-                const response = await fetch(`${PAGES_FOLDER}/${filename}`);
-                const content = await response.text();
-                const { frontmatter, content: markdown } = parseFrontmatter(content);
-                
-                let html = '<div class="back"><a href="#">← back</a></div>';
-                
-                // Display frontmatter
-                html += '<div class="frontmatter">';
-                for (const [key, value] of Object.entries(frontmatter)) {
-                    if (key !== 'images') {
-                        html += `<div><strong>${key}:</strong> ${value}</div>`;
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+        <script>
+            const app = document.getElementById("app");
+            const PAGES_FOLDER = "pages";
+
+            // Parse frontmatter from markdown
+            function parseFrontmatter(content) {
+                const frontmatterRegex =
+                    /^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/;
+                const match = content.match(frontmatterRegex);
+
+                if (!match) return { frontmatter: {}, content: content };
+
+                const frontmatterText = match[1];
+                const markdown = match[2];
+                const frontmatter = {};
+
+                frontmatterText.split("\n").forEach((line) => {
+                    const colonIndex = line.indexOf(":");
+                    if (colonIndex > -1) {
+                        const key = line.substring(0, colonIndex).trim();
+                        const value = line.substring(colonIndex + 1).trim();
+                        frontmatter[key] = value;
+                    }
+                });
+
+                return { frontmatter, content: markdown };
+            }
+
+            // Floyd-Steinberg dithering
+            function ditherImage(img, callback) {
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+                canvas.width = img.width;
+                canvas.height = img.height;
+
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height,
+                );
+                const data = imageData.data;
+
+                for (let y = 0; y < canvas.height; y++) {
+                    for (let x = 0; x < canvas.width; x++) {
+                        const i = (y * canvas.width + x) * 4;
+                        const oldR = data[i];
+                        const oldG = data[i + 1];
+                        const oldB = data[i + 2];
+
+                        const newR = oldR < 128 ? 0 : 255;
+                        const newG = oldG < 128 ? 0 : 255;
+                        const newB = oldB < 128 ? 0 : 255;
+
+                        data[i] = newR;
+                        data[i + 1] = newG;
+                        data[i + 2] = newB;
+
+                        const errR = oldR - newR;
+                        const errG = oldG - newG;
+                        const errB = oldB - newB;
+
+                        if (x + 1 < canvas.width) {
+                            data[(y * canvas.width + x + 1) * 4] +=
+                                (errR * 7) / 16;
+                            data[(y * canvas.width + x + 1) * 4 + 1] +=
+                                (errG * 7) / 16;
+                            data[(y * canvas.width + x + 1) * 4 + 2] +=
+                                (errB * 7) / 16;
+                        }
+                        if (x - 1 >= 0 && y + 1 < canvas.height) {
+                            data[((y + 1) * canvas.width + x - 1) * 4] +=
+                                (errR * 3) / 16;
+                            data[((y + 1) * canvas.width + x - 1) * 4 + 1] +=
+                                (errG * 3) / 16;
+                            data[((y + 1) * canvas.width + x - 1) * 4 + 2] +=
+                                (errB * 3) / 16;
+                        }
+                        if (y + 1 < canvas.height) {
+                            data[((y + 1) * canvas.width + x) * 4] +=
+                                (errR * 5) / 16;
+                            data[((y + 1) * canvas.width + x) * 4 + 1] +=
+                                (errG * 5) / 16;
+                            data[((y + 1) * canvas.width + x) * 4 + 2] +=
+                                (errB * 5) / 16;
+                        }
+                        if (x + 1 < canvas.width && y + 1 < canvas.height) {
+                            data[((y + 1) * canvas.width + x + 1) * 4] +=
+                                (errR * 1) / 16;
+                            data[((y + 1) * canvas.width + x + 1) * 4 + 1] +=
+                                (errG * 1) / 16;
+                            data[((y + 1) * canvas.width + x + 1) * 4 + 2] +=
+                                (errB * 1) / 16;
+                        }
                     }
                 }
-                html += '</div>';
-                
-                // Display images if present
-                if (frontmatter.images) {
-                    const images = frontmatter.images.split(',').map(img => img.trim());
-                    html += '<div class="images">';
-                    images.forEach(img => {
-                        const imgPath = `images/${img}`;
-                        html += `
+
+                ctx.putImageData(imageData, 0, 0);
+                callback(canvas.toDataURL());
+            }
+
+            // List your pages here
+            const PAGES = ["first-post.md", "go.md"];
+
+            // Show index page
+            function showIndex() {
+                app.innerHTML = PAGES.map(
+                    (file) =>
+                        `<span class="index-item"><a href="#${file}">${file.replace(".md", "")}</a></span>`,
+                ).join(" ");
+            }
+
+            // Show individual page
+            async function showPage(filename) {
+                try {
+                    const response = await fetch(`${PAGES_FOLDER}/${filename}`);
+                    const content = await response.text();
+                    const { frontmatter, content: markdown } =
+                        parseFrontmatter(content);
+
+                    let html = '<div class="back"><a href="#">← back</a></div>';
+
+                    // Display frontmatter
+                    html += '<div class="frontmatter">';
+                    for (const [key, value] of Object.entries(frontmatter)) {
+                        if (key !== "images") {
+                            html += `<div><strong>${key}:</strong> ${value}</div>`;
+                        }
+                    }
+                    html += "</div>";
+
+                    // Display images if present
+                    if (frontmatter.images) {
+                        const images = frontmatter.images
+                            .split(",")
+                            .map((img) => img.trim());
+                        html += '<div class="images">';
+                        images.forEach((img) => {
+                            const imgPath = `images/${img}`;
+                            html += `
                             <div class="image-container">
                                 <a href="${imgPath}" target="_blank">
                                     <img src="${imgPath}" data-original="${imgPath}" class="to-dither" alt="${img}">
                                 </a>
                             </div>
                         `;
-                    });
-                    html += '</div>';
-                }
-                
-                // Display markdown content
-                html += `<div class="content">${marked.parse(markdown)}</div>`;
-                
-                app.innerHTML = html;
-                
-                // Apply dithering to images
-                document.querySelectorAll('.to-dither').forEach(img => {
-                    img.onload = function() {
-                        ditherImage(this, ditheredSrc => {
-                            this.src = ditheredSrc;
                         });
-                    };
-                    // Trigger load if cached
-                    if (img.complete) img.onload();
-                });
-                
-            } catch (e) {
-                app.innerHTML = '<div class="back"><a href="#">← back</a></div><p>Error loading page.</p>';
-            }
-        }
+                        html += "</div>";
+                    }
 
-        // Router
-        function route() {
-            const hash = window.location.hash.slice(1);
-            if (hash) {
-                showPage(hash);
-            } else {
-                showIndex();
-            }
-        }
+                    // Display markdown content
+                    html += `<div class="content">${marked.parse(markdown)}</div>`;
 
-        window.addEventListener('hashchange', route);
-        route();
-    </script>
-</body>
+                    app.innerHTML = html;
+
+                    // Apply dithering to images
+                    document.querySelectorAll(".to-dither").forEach((img) => {
+                        img.onload = function () {
+                            ditherImage(this, (ditheredSrc) => {
+                                this.src = ditheredSrc;
+                            });
+                        };
+                        // Trigger load if cached
+                        if (img.complete) img.onload();
+                    });
+                } catch (e) {
+                    app.innerHTML =
+                        '<div class="back"><a href="#">← back</a></div><p>Error loading page.</p>';
+                }
+            }
+
+            // Router
+            function route() {
+                const hash = window.location.hash.slice(1);
+                if (hash) {
+                    showPage(hash);
+                } else {
+                    showIndex();
+                }
+            }
+
+            window.addEventListener("hashchange", route);
+            route();
+        </script>
+    </body>
 </html>
