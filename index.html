@@ -6,7 +6,7 @@
         <title>Site</title>
         <style>
             html {
-                zoom: 3;
+                zoom: 1;
                 filter: invert(0%) sepia(100%) saturate(0%) hue-rotate(0deg);
             }
             body {
@@ -48,8 +48,10 @@
             }
             .image-container {
                 box-sizing: border-box;
+                background-color: white;
                 position: absolute;
-                border: dashed 1px salmon;
+                border: solid 1px black;
+                padding: 5px;
             }
             .image-container img {
                 width: 100%;
@@ -76,8 +78,8 @@
                 transform: translate(-50%, -50%);
             }
             div.nanobox > img {
-                height: 80vh;
-                width: 80vh;
+                height: 30vh;
+                width: 100%;
             }
         </style>
     </head>
