@@ -32,14 +32,12 @@
                 margin: 0.25rem 0;
             }
             .images {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 0.5rem;
+                position: relative;
                 margin: 2rem 0;
-                grid-auto-flow: dense;
             }
             .image-container {
                 box-sizing: border-box;
+                position: absolute;
             }
             .image-container img {
                 width: 100%;
@@ -225,7 +223,16 @@
                     app.innerHTML = html;
 
                     // Apply dithering to images
-                    document.querySelectorAll(".to-dither").forEach((img) => {
+                    const containers =
+                        document.querySelectorAll(".image-container");
+                    const cols = 3;
+                    const gap = 8;
+                    const colWidth =
+                        (app.offsetWidth - gap * (cols - 1)) / cols;
+                    const colHeights = new Array(cols).fill(0);
+
+                    containers.forEach((container, idx) => {
+                        const img = container.querySelector(".to-dither");
                         const originalImg = new Image();
                         originalImg.crossOrigin = "anonymous";
                         originalImg.onload = function () {
@@ -233,6 +240,29 @@
                                 img.src = ditheredSrc;
                                 img.classList.remove("to-dither");
                                 img.classList.add("dithered");
+
+                                // Masonry layout
+                                const ratio = this.height / this.width;
+                                const height = colWidth * ratio;
+                                const shortestCol = colHeights.indexOf(
+                                    Math.min(...colHeights),
+                                );
+
+                                container.style.width = colWidth + "px";
+                                container.style.left =
+                                    shortestCol * (colWidth + gap) + "px";
+                                container.style.top =
+                                    colHeights[shortestCol] + "px";
+
+                                colHeights[shortestCol] += height + gap;
+
+                                // Set container height after all positioned
+                                if (idx === containers.length - 1) {
+                                    document.querySelector(
+                                        ".images",
+                                    ).style.height =
+                                        Math.max(...colHeights) + "px";
+                                }
                             });
                         };
                         originalImg.src = img.dataset.original;
