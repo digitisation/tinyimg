@@ -7,6 +7,7 @@
         <style>
             html {
                 zoom: 3;
+                filter: invert(0%) sepia(100%) saturate(0%) hue-rotate(0deg);
             }
             body {
                 font-family: monospace;
@@ -14,6 +15,13 @@
                 margin: 2rem auto;
                 padding: 0 1rem;
                 line-height: 1.6;
+                background: white;
+                color: black;
+            }
+            @media (max-width: 768px) {
+                body {
+                    max-width: 100%;
+                }
             }
             a {
                 color: blue;
@@ -64,6 +72,9 @@
     </head>
     <body>
         <div id="app"></div>
+        <div class="nanobox" onclick="this.style.display='none'">
+            <img src="" alt="" />
+        </div>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
         <script>
@@ -211,7 +222,7 @@
                             const imgPath = `images/${img}`;
                             html += `
                             <div class="image-container">
-                                <a href="${imgPath}" target="_blank">
+                                <a href="#" class="lightbox-trigger" data-src="${imgPath}">
                                     <img src="${imgPath}" data-original="${imgPath}" class="to-dither" alt="${img}">
                                 </a>
                             </div>
@@ -229,7 +240,7 @@
                     const containers =
                         document.querySelectorAll(".image-container");
                     const imagesContainer = document.querySelector(".images");
-                    const cols = 3;
+                    const cols = window.innerWidth <= 768 ? 1 : 3;
                     const gap = 8;
                     const colWidth =
                         (app.offsetWidth - gap * (cols - 1)) / cols;
@@ -269,6 +280,21 @@
                         };
                         originalImg.src = img.dataset.original;
                     });
+
+                    // Lightbox functionality
+                    document
+                        .querySelectorAll(".lightbox-trigger")
+                        .forEach((trigger) => {
+                            trigger.addEventListener("click", (e) => {
+                                e.preventDefault();
+                                const lightbox =
+                                    document.querySelector(".nanobox");
+                                const lightboxImg =
+                                    lightbox.querySelector("img");
+                                lightboxImg.src = trigger.dataset.src;
+                                lightbox.style.display = "block";
+                            });
+                        });
                 } catch (e) {
                     app.innerHTML =
                         '<div class="back"><a href="#">← back</a></div><p>Error loading page.</p>';
