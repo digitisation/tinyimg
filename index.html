@@ -71,6 +71,12 @@
         </style>
     </head>
     <body>
+        <div class="zoom-controls">
+            <a onclick="document.documentElement.style.zoom='1'">1</a>
+            <a onclick="document.documentElement.style.zoom='2'">2</a>
+            <a onclick="document.documentElement.style.zoom='3'">3</a>
+            <a onclick="document.documentElement.style.zoom='4'">4</a>
+        </div>
         <div id="app"></div>
         <div class="nanobox" onclick="this.style.display='none'">
             <img src="" alt="" />
@@ -240,7 +246,9 @@
                     const containers =
                         document.querySelectorAll(".image-container");
                     const imagesContainer = document.querySelector(".images");
-                    const cols = window.innerWidth <= 768 ? 1 : 3;
+                    const isMobile =
+                        window.innerWidth / window.devicePixelRatio <= 768;
+                    const cols = isMobile ? 1 : 3;
                     const gap = 8;
                     const colWidth =
                         (app.offsetWidth - gap * (cols - 1)) / cols;
