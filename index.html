@@ -5,6 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Site</title>
         <style>
+            html {
+                zoom: 3;
+            }
             body {
                 font-family: monospace;
                 max-width: 60ch;
@@ -225,11 +228,13 @@
                     // Apply dithering to images
                     const containers =
                         document.querySelectorAll(".image-container");
+                    const imagesContainer = document.querySelector(".images");
                     const cols = 3;
                     const gap = 8;
                     const colWidth =
                         (app.offsetWidth - gap * (cols - 1)) / cols;
                     const colHeights = new Array(cols).fill(0);
+                    let loadedCount = 0;
 
                     containers.forEach((container, idx) => {
                         const img = container.querySelector(".to-dither");
@@ -255,14 +260,11 @@
                                     colHeights[shortestCol] + "px";
 
                                 colHeights[shortestCol] += height + gap;
+                                loadedCount++;
 
-                                // Set container height after all positioned
-                                if (idx === containers.length - 1) {
-                                    document.querySelector(
-                                        ".images",
-                                    ).style.height =
-                                        Math.max(...colHeights) + "px";
-                                }
+                                // Update container height as images load
+                                imagesContainer.style.height =
+                                    Math.max(...colHeights) + "px";
                             });
                         };
                         originalImg.src = img.dataset.original;
