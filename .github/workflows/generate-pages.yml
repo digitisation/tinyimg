@@ -1,0 +1,26 @@
+name: Generate pages.json
+
+on:
+  push:
+    paths:
+      - "pages/*.md"
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate pages.json
+        run: |
+          cd pages
+          echo '{"pages":['$(ls *.md | sed 's/.*/"&"/' | paste -sd,)']}'> ../pages.json
+
+      - name: Commit and push
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add pages.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update pages.json"
+          git push
