@@ -6,11 +6,12 @@
         <title>Site</title>
         <style>
             html {
-                filter: invert(0) sepia(100%) saturate(710%) hue-rotate(232deg);
+                /*filter: invert(0) sepia(100%) saturate(710%) hue-rotate(232deg);*/
+                filter: invert(20%) sepia(1000%) saturate(20%) hue-rotate(20deg);
             }
             body {
                 font-family: monospace;
-                max-width: 60ch;
+                max-width: 800px;
                 margin: 2rem auto;
                 padding: 0 1rem;
                 line-height: 1.6;
@@ -53,7 +54,7 @@
                 }
             }
             .image-container {
-                border: dashed 1px black;
+                border: double 15px gray;
                 padding: 5px;
                 background: white;
             }
@@ -85,24 +86,25 @@
                 left: 0;
                 width: 100vw;
                 height: 100vh;
-                background: rgba(0, 0, 0, 0.95);
+                /*background: rgba(0, 0, 0, 0.95);*/
                 cursor: pointer;
             }
             .nanobox.active {
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                backdrop-filter: blur(5px);
             }
             .nanobox img {
                 max-width: 90vw;
                 max-height: 90vh;
                 image-rendering: pixelated;
-                animation: throb 8s ease-in-out infinite;
+                animation: throb 80s ease-in-out infinite;
             }
             @keyframes throb {
                 0%,
                 100% {
-                    transform: scale(0.85);
+                    transform: scale(0.9);
                 }
                 50% {
                     transform: scale(0.95);
@@ -111,10 +113,10 @@
             /* Zoom controls */
             .zoom-controls {
                 position: fixed;
-                top: 1rem;
+                /* top: 1rem; */
                 right: 1rem;
                 z-index: 1000;
-                display: flex;
+                display: grid;
                 gap: 0.5rem;
             }
             .zoom-controls a {
