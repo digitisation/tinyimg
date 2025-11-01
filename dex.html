@@ -322,8 +322,7 @@
                                 img.src = ditheredSrc;
                                 img.classList.remove("to-dither");
                                 img.classList.add("dithered");
-                                img.onclick = () =>
-                                    openLightbox(img.dataset.original);
+                                img.onclick = () => openLightbox(ditheredSrc);
                             });
                         };
                         originalImg.src = img.dataset.original;
